@@ -1,3 +1,5 @@
+import 'dart:html';
+
 import 'package:flutter/material.dart';
 import 'package:english_words/english_words.dart';
 import 'package:provider/provider.dart';
@@ -23,7 +25,22 @@ class MyApp extends StatelessWidget {
 }
 
 class MyAppState extends ChangeNotifier {
+  final stopwatch = Stopwatch();
+
   var opacityList = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
+
+  void toggleVisible(context, i) {
+    if (!opacityList.contains(0.0)) {
+      stopwatch.start();
+    }
+    opacityList[i] = 0.0;
+    if (!opacityList.contains(1.0)) {
+      stopwatch.stop();
+      print(stopwatch.elapsedMilliseconds / 1000.0);
+      Navigator.pushNamed(context, '/score');
+    }
+    notifyListeners();
+  }
 }
 
 class MyHomePage extends StatefulWidget {
@@ -36,6 +53,8 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
 
+    var gridVisible = appState.opacityList;
+
     return Scaffold(
       body: GridView.builder(
         itemCount: 9,
@@ -44,7 +63,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         itemBuilder: (context, index) {
           return Opacity(
-            opacity: 0.0,
+            opacity: gridVisible[index],
             child: Padding(
               padding: const EdgeInsets.all(8),
               child: SizedBox(
@@ -55,13 +74,38 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: InkWell(
                     child: Image.network(
                         'https://i.giphy.com/media/xT0xezQGU5xCDJuCPe/200.gif'),
-                    onTap: () {},
+                    onTap: () {
+                      appState.toggleVisible(context, index);
+                    },
                   ),
                 ),
               ),
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class Score extends StatelessWidget {
+  const Score({super.key});
+  @override
+  Widget build(BuildContext context) {
+    var appState = context.watch<MyAppState>();
+    return Scaffold(
+      body: Column(
+        children: [
+          Text('your time was:'
+              '${appState.stopwatch.elapsedMilliseconds / 1000.0}'
+              ' seconds'),
+          ElevatedButton(
+            child: Text('New Game'),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          )
+        ],
       ),
     );
   }
